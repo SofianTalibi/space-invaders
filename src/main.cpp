@@ -1,7 +1,7 @@
-#include <iostream>
-using namespace std;
+#include "Game.hpp"
 
 int main() {
-    cout << "Hello Space Invaders!" << endl;
+    Game game;
+    game.run();
     return 0;
 }
