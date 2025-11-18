@@ -1,6 +1,9 @@
 #include <vector> // nécessaire pour utiliser std::vector
 
 class Game {
+    struct Enemy {
+    int x;
+    int y;};
 public:
     Game();          // constructeur
     void run();
@@ -16,4 +19,8 @@ private:
     bool running;    // état du jeu
     std::vector<int> bulletsX; // positions X des tirs
     std::vector<int> bulletsY; // positions Y des tirs
+    
+
+    std::vector<Enemy> enemies;
+
 };

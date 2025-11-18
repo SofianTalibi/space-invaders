@@ -9,6 +9,13 @@ Game::Game() {
     width = 20;    // largeur de l'écran
     height = 10;   // hauteur de l'écran
     playerX = width / 2;
+    // créer une ligne d'ennemis en haut
+    for (int i = 0; i < 5; i++) {
+        Enemy e;
+        e.x = 2 + i * 3; // espacement horizontal
+        e.y = height - 1; // ligne du haut
+        enemies.push_back(e);
+    }
     running = true;
 }
 
@@ -76,6 +83,19 @@ void Game::update() {
             bulletsX.erase(bulletsX.begin() + i);
         }
     }
+    // vérifier collision tir / ennemi
+    for (int i = bulletsY.size() - 1; i >= 0; i--) {
+        for (int j = enemies.size() - 1; j >= 0; j--) {
+            if (bulletsX[i] == enemies[j].x && bulletsY[i] == enemies[j].y) {
+                // supprimer l'ennemi et le tir
+                enemies.erase(enemies.begin() + j);
+                bulletsX.erase(bulletsX.begin() + i);
+                bulletsY.erase(bulletsY.begin() + i);
+                break;
+            }
+        }
+    }
+
 
 }
 
@@ -85,25 +105,42 @@ void Game::update() {
 void Game::render() {
     system("clear"); // efface l'écran
 
-    for (int y = height-1; y >= 0; y--) {
-    for (int x = 0; x < width; x++) {
-        bool isBullet = false;
-        for (int i = 0; i < bulletsX.size(); i++) {
-            if (bulletsX[i] == x && bulletsY[i] == y) {
-                std::cout << '|';
-                isBullet = true;
-                break;
+    for (int y = height - 1; y >= 0; y--) {      // parcourir chaque ligne
+        for (int x = 0; x < width; x++) {        // parcourir chaque colonne
+            bool printed = false;
+
+            // afficher les tirs
+            for (int i = 0; i < bulletsX.size(); i++) {
+                if (bulletsX[i] == x && bulletsY[i] == y) {
+                    std::cout << '|';
+                    printed = true;
+                    break;
+                }
+            }
+
+            // afficher les ennemis
+            if (!printed) {
+                for (const auto& e : enemies) {
+                    if (e.x == x && e.y == y) {
+                        std::cout << 'M'; // caractère pour un ennemi
+                        printed = true;
+                        break;
+                    }
+                }
+            }
+
+            // afficher le joueur
+            if (!printed) {
+                if (y == 0 && x == playerX)
+                    std::cout << 'A';
+                else
+                    std::cout << '.';
             }
         }
-        if (!isBullet) {
-            if (y == 0 && x == playerX) std::cout << 'A'; // joueur
-            else std::cout << '.';
-        }
+        std::cout << std::endl; // passer à la ligne suivante
     }
-    std::cout << std::endl;
 }
 
-}
 
 
 
