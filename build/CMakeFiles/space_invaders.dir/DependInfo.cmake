@@ -8,6 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/home/smeca-user/space-invaders/src/Game.cpp" "CMakeFiles/space_invaders.dir/src/Game.cpp.o" "gcc" "CMakeFiles/space_invaders.dir/src/Game.cpp.o.d"
   "/home/smeca-user/space-invaders/src/main.cpp" "CMakeFiles/space_invaders.dir/src/main.cpp.o" "gcc" "CMakeFiles/space_invaders.dir/src/main.cpp.o.d"
   )
 

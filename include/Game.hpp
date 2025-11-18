@@ -2,18 +2,18 @@
 
 class Game {
 public:
-    Game();
+    Game();          // constructeur
     void run();
-private:
-    int playerX;
-    int width;
-    bool running;
-
-    std::vector<int> bulletsX; // positions X des tirs
-    std::vector<int> bulletsY; // positions Y des tirs
-
-    void processInput();
     void update();
     void render();
-    void shoot(); // fonction pour ajouter un tir
+    void processInput();  
+    void shoot();
+
+private:
+    int width;       // largeur de l'écran
+    int height;      // hauteur de l'écran
+    int playerX;     // position du joueur
+    bool running;    // état du jeu
+    std::vector<int> bulletsX; // positions X des tirs
+    std::vector<int> bulletsY; // positions Y des tirs
 };
