@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/space_invaders.dir/src/Game.cpp.o CMakeFiles/space_invaders.dir/src/main.cpp.o -o space_invaders 
