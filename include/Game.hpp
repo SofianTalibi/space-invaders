@@ -39,6 +39,7 @@ private:
     // score du joueur
     int score = 0;
     int level = 1;          // Niveau actuel
+    int lives = 3;          // <<< Nombre de vies du joueur
     int enemySpeed = 10;    // Vitesse des ennemis (frames entre mouvements)
     int enemyMoveCounter = 0; // Compteur interne pour ralentir/accélérer les ennemis
 
