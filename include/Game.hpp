@@ -3,8 +3,11 @@
 class Game {
     struct Enemy {
     int x;
-    int y;};
-        // Structure pour les explosions ASCII
+    int y;
+    bool isBoss = false;  // vrai si c’est un boss
+    int hp = 1;           // points de vie (1 pour un ennemi normal, plus pour un boss)
+    };
+    // Structure pour les explosions ASCII
     struct Explosion {
         int x;
         int y;

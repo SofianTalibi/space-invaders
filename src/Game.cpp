@@ -229,7 +229,11 @@ void Game::render() {
             // ennemis
             if (!printed) {
                 for (const auto& e : enemies) {
-                    if (e.x == x && e.y == y) { std::cout << 'M'; printed = true; break; }
+                    if (e.x == x && e.y == y) {
+                        if (e.isBoss) std::cout << 'B';  // boss 
+                        else std::cout << 'M';  // ennemi normal
+                        printed = true;
+                        break; }
                 }
             }
 
@@ -269,6 +273,17 @@ void Game::shoot() {
 void Game::spawnWave() {
     enemies.clear();
 
+    if (level % 5 == 0) {
+        // --- NIVEAU BOSS ---
+        Enemy boss;
+        boss.x = width / 2;  // centré
+        boss.y = height - 1; // tout en haut
+        boss.isBoss = true;
+        boss.hp = 10;         // exemple : boss avec 10 PV
+        enemies.push_back(boss);
+        std::cout << "\n--- BOSS LEVEL " << level << " ---\n";
+    }else{
+
     int enemiesPerLine = 8;             // nombre d'ennemis par ligne
     int lines = level;                  // le niveau = nombre de lignes
     int startY = height - 1;            // première ligne en haut
@@ -286,5 +301,5 @@ void Game::spawnWave() {
     enemySpeed = std::max(3, 10 - level);   // vitesse ennemis
 
     std::cout << "\n--- NIVEAU " << level << " ---\n";
-    usleep(500000);
+    usleep(500000);}
 }
