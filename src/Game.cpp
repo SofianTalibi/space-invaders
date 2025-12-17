@@ -448,6 +448,11 @@ void Game::runSFML(const std::string& fontPath)  {
         const float py = static_cast<float>(hudH + margin + (height - 1 - gy) * cell);
         return sf::Vector2f(px, py);
     };
+    sf::Clock clock;
+    float accumulator = 0.f;
+
+    bool requestShoot = false;
+    float shootCooldown = 0.f;
 
 }
 #endif
