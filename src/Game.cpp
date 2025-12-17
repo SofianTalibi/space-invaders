@@ -443,6 +443,11 @@ void Game::runSFML(const std::string& fontPath)  {
         hud.setCharacterSize(18);
         hud.setPosition(static_cast<float>(margin), 10.f);
     }
+    auto gridToPixel = [&](int gx, int gy) {
+        const float px = static_cast<float>(margin + gx * cell);
+        const float py = static_cast<float>(hudH + margin + (height - 1 - gy) * cell);
+        return sf::Vector2f(px, py);
+    };
 
 }
 #endif
