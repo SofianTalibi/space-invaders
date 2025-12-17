@@ -41,7 +41,8 @@ Game::Game() {
 
     enemyDirection = 1;     // direction initiale des ennemis
     enemyMoveCounter = 0;   // compteur pour la vitesse des ennemis
-
+    bossHealth = 0;
+    bossMaxHealth = 0;
     spawnWave();            // création de la première vague
     running = true;         // la boucle du jeu est active
 }
@@ -49,7 +50,13 @@ Game::Game() {
 // ======================================================
 //       Fonction utilitaire : lire une touche sans ENTER
 // ======================================================
-char getInput() {
+static char getInput() {
+#if defined(_WIN32)
+    if (_kbhit()) {
+        return static_cast<char>(_getch());
+    }
+    return 0;
+#else
     char buf = 0;
     struct termios old = {0};
     tcgetattr(0, &old);         // récupère les paramètres du terminal
@@ -66,6 +73,7 @@ char getInput() {
     tcsetattr(0, TCSADRAIN, &old);
 
     return buf;                 // retourne la touche
+#endif
 }
 
 // ======================================================
@@ -86,6 +94,7 @@ void Game::run() {
         usleep(100000);       // rythme (~10 FPS)
     }
 }
+#endif 
 
 // ======================================================
 //                  MISE À JOUR DU JEU
@@ -131,19 +140,19 @@ void Game::update() {
     // -------------------------------
     // Déplacement des tirs du joueur vers le haut
     // -------------------------------
-    for (int i = 0; i < bulletsY.size(); i++)
+    for (std::size_t i = 0; i < bulletsY.size(); i++)
         bulletsY[i]++;
 
     // -------------------------------
     // Déplacement des tirs ennemis vers le bas
     // -------------------------------
-    for (int i = 0; i < enemyBulletsY.size(); i++)
+    for (std::size_t i = 0; i < enemyBulletsY.size(); i++)
         enemyBulletsY[i]--;
 
     // -------------------------------
     // Suppression des tirs ennemis hors écran
     // -------------------------------
-    for (int i = enemyBulletsY.size() - 1; i >= 0; i--) {
+    for (int i = static_cast<int>(enemyBulletsY.size()) - 1; i >= 0; i--) {
         if (enemyBulletsY[i] < 0) {
             enemyBulletsX.erase(enemyBulletsX.begin() + i);
             enemyBulletsY.erase(enemyBulletsY.begin() + i);
@@ -164,7 +173,7 @@ void Game::update() {
     // -------------------------------
     // Collision tirs ennemis → joueur
     // -------------------------------
-    for (int i = enemyBulletsY.size() - 1; i >= 0; i--) {
+    for (int i = static_cast<int>(enemyBulletsY.size()) - 1; i >= 0; i--) {
         if (enemyBulletsX[i] == playerX && enemyBulletsY[i] == 0) {
             enemyBulletsX.erase(enemyBulletsX.begin() + i);
             enemyBulletsY.erase(enemyBulletsY.begin() + i);
@@ -190,8 +199,8 @@ void Game::update() {
     // -------------------------------
     // Collision tirs joueur → ennemis
     // -------------------------------
-    for (int i = bulletsY.size() - 1; i >= 0; i--) {
-        for (int j = enemies.size() - 1; j >= 0; j--) {
+    for (int i =static_cast<int>(bulletsY.size()) - 1; i >= 0; i--) {
+        for (int j = static_cast<int>(enemies.size()) - 1; j >= 0; j--) {
 
             // Si la balle touche un ennemi
             if (bulletsX[i] == enemies[j].x && bulletsY[i] == enemies[j].y) {
@@ -223,7 +232,7 @@ void Game::update() {
     // -------------------------------
     // Suppression tirs joueur hors écran
     // -------------------------------
-    for (int i = bulletsY.size() - 1; i >= 0; i--) {
+    for (int i = static_cast<int>(bulletsY.size()) - 1; i >= 0; i--) {
         if (bulletsY[i] >= height) {
             bulletsX.erase(bulletsX.begin() + i);
             bulletsY.erase(bulletsY.begin() + i);
@@ -271,7 +280,7 @@ void Game::render() {
             bool printed = false;
 
             // Tir joueur
-            for (int i = 0; i < bulletsX.size(); i++) {
+            for (std::size_t i = 0; i < bulletsX.size(); i++) {
                 if (bulletsX[i] == x && bulletsY[i] == y) {
                     std::cout << '|';
                     printed = true;
@@ -281,7 +290,7 @@ void Game::render() {
 
             // Tir ennemi
             if (!printed) {
-                for (int i = 0; i < enemyBulletsX.size(); i++) {
+                for (std::size_t i = 0; i < enemyBulletsX.size(); i++) {
                     if (enemyBulletsX[i] == x && enemyBulletsY[i] == y) {
                         std::cout << '!';
                         printed = true;
@@ -359,7 +368,7 @@ void Game::enemyShoot() {
     if (enemies.empty()) return;
 
     // choisir un ennemi au hasard
-    int idx = rand() % enemies.size();
+    int idx = rand() % static_cast<int>(enemies.size());
 
     enemyBulletsX.push_back(enemies[idx].x);
     enemyBulletsY.push_back(enemies[idx].y - 1);
@@ -381,6 +390,7 @@ void Game::spawnWave() {
         bossHealth = 20 + level * 2;  // vie en fonction du niveau
         bossMaxHealth = bossHealth;
         std::cout << "\n--- BOSS LEVEL " << level << " ---\n";
+        return ;
     }else{
 
     int enemiesPerLine = 8;             // nombre d'ennemis par ligne
