@@ -489,6 +489,22 @@ void Game::runSFML(const std::string& fontPath)  {
 
             update();
         }
+         window.clear(sf::Color(10, 10, 18));
+
+        sf::RectangleShape border(sf::Vector2f(static_cast<float>(width * cell), static_cast<float>(height * cell)));
+        border.setPosition(static_cast<float>(margin), static_cast<float>(hudH + margin));
+        border.setFillColor(sf::Color::Transparent);
+        border.setOutlineThickness(2.f);
+        border.setOutlineColor(sf::Color(120, 120, 160));
+        window.draw(border);
+
+        {
+            sf::RectangleShape player(sf::Vector2f(cell * 0.9f, cell * 0.6f));
+            player.setFillColor(sf::Color(80, 220, 140));
+            const auto p = gridToPixel(playerX, 0);
+            player.setPosition(p.x + cell * 0.05f, p.y + cell * 0.25f);
+            window.draw(player);
+        }
 
 }
 #endif
