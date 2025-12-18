@@ -270,28 +270,27 @@ void Game::update() {
 #ifndef USE_SFML
 
 void Game::render() {
-    std::string buffer;
-    buffer += "\033[H\033[?25l"; 
+     std::cout << "\033[H";
 
     // -------------------------------
     // Bordure supérieure
     // -------------------------------
-    for (int x = 0; x < width + 2; x++) buffer += "+";
-    buffer += "\n";
-
+    for (int x = 0; x < width + 2; x++)  std::cout << "+";
+    std::cout << "\n";
     // -------------------------------
     // Affichage HUD
     // -------------------------------
-    buffer += "SCORE : " + std::to_string(score) + 
-              "    VIES : " + std::to_string(lives) + 
-              "    NIVEAU : " + std::to_string(level) + "\n\n";
+    std::cout << "SCORE : " << score
+              << "    VIES : " << lives
+              << "    NIVEAU : " << level
+              << "\n\n";
 
     // -------------------------------
     // Grille principale
     // -------------------------------
     for (int y = height - 1; y >= 0; y--) {
 
-        buffer += "|"; // bordure gauche
+        std::cout << "|"; // bordure gauche
 
         for (int x = 0; x < width; x++) {
 
@@ -368,6 +367,7 @@ void Game::render() {
             else std::cout << ".";               // vie perdue
         }
         std::cout << "\n\n";
+        std::cout << std::flush;
     }
 }
 #endif
