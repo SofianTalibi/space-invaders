@@ -16,6 +16,7 @@
 
     #else
         #include <termios.h>  // lecture clavier non bloquante
+        #include <fcntl.h> 
     #endif
 #endif
 
@@ -29,6 +30,31 @@ static void sleep_ms(int ms) {
 }
 
 
+// ======================================================
+//      Fonction auxiliaire :configurer le mode du terminal
+// ======================================================
+
+#ifndef USE_SFML
+static struct termios orig_termios; 
+
+static void enableRawMode() {
+#if !defined(_WIN32)
+    tcgetattr(0, &orig_termios);
+    struct termios raw = orig_termios;
+    raw.c_lflag &= ~(ECHO | ICANON);
+    raw.c_cc[VMIN] = 0;
+    raw.c_cc[VTIME] = 0;
+    tcsetattr(0, TCSANOW, &raw);
+#endif
+}
+
+static void disableRawMode() {
+#if !defined(_WIN32)
+    tcsetattr(0, TCSANOW, &orig_termios);
+    std::cout << "\033[?25h"; 
+#endif
+}
+#endif
 // ======================================================
 //                   CONSTRUCTEUR DU JEU
 // ======================================================
@@ -49,54 +75,40 @@ Game::Game() {
     running = true;         // la boucle du jeu est active
 }
 
-// ======================================================
-//       Fonction utilitaire : lire une touche sans ENTER
-// ======================================================
-
-#ifndef USE_SFML
-static char getInput() {
-#if defined(_WIN32)
-    if (_kbhit()) {
-        return static_cast<char>(_getch());
-    }
-    return 0;
-#else
-    char buf = 0;
-    struct termios old = {0};
-    tcgetattr(0, &old);         // récupère les paramètres du terminal
-    old.c_lflag &= ~ICANON;     // mode non canonique (lecture instantanée)
-    old.c_lflag &= ~ECHO;       // ne pas afficher les touches
-    old.c_cc[VMIN] = 0;         // lecture non bloquante
-    old.c_cc[VTIME] = 0;
-    tcsetattr(0, TCSANOW, &old);
-
-    read(0, &buf, 1);           // lire une touche
-
-    old.c_lflag |= ICANON;      // restauration mode canonique
-    old.c_lflag |= ECHO;        // réactivation affichage touches
-    tcsetattr(0, TCSADRAIN, &old);
-
-    return buf;                 // retourne la touche
-#endif
-}
 
 // ======================================================
 //                     BOUCLE PRINCIPALE
 // ======================================================
+#ifndef USE_SFML  
 void Game::run() {
+    enableRawMode();
     while (running) {
         render();              // afficher l’état du jeu
-        char input = getInput(); // lire la touche pressée
+    #if defined(_WIN32)
+        if (_kbhit()) {
+            char c = _getch();
+            if (c == 'a' && playerX > 0) playerX--;
+            if (c == 'd' && playerX < width - 1) playerX++;
+            if (c == 't') shoot();
+            if (c == 'q') running = false;
+        }
+    #else
+        char buf;
+        while (read(0, &buf, 1) > 0) {
+            if (buf == 'a' && playerX > 0) playerX--;
+            if (buf == 'd' && playerX < width - 1) playerX++;
+            if (buf == 't') shoot();
+            if (buf == 'q') running = false;
+        }
+    #endif
 
-        // ------------------------------ Gestion joueur ------------------------------
-        if (input == 'a' && playerX > 0) playerX--;  // déplacement gauche
-        if (input == 'd' && playerX < width - 1) playerX++; // déplacement droite
-        if (input == 't') shoot();                  // tir
-        if (input == 'q') running = false;          // quitter le jeu
-
-        update();             // mettre à jour tout le jeu
-        usleep(100000);       // rythme (~10 FPS)
+        update();             
+        sleep_ms(30);       
     }
+    
+    disableRawMode(); 
+    system("clear");          
+    std::cout << "GAME OVER / QUIT\nFinal Score: " << score << "\n"; 
 }
 #endif 
 
@@ -138,7 +150,7 @@ void Game::update() {
     // -------------------------------
     // Tirs ennemis aléatoires
     // -------------------------------
-    if (rand() % (20 - std::min(level, 15)) == 0)
+    if (rand() % (40 - std::min(level*2, 30)) == 0)
         enemyShoot(); // un ennemi tire
 
     // -------------------------------
@@ -258,28 +270,28 @@ void Game::update() {
 #ifndef USE_SFML
 
 void Game::render() {
-    system("clear");
+    std::string buffer;
+    buffer += "\033[H\033[?25l"; 
 
     // -------------------------------
     // Bordure supérieure
     // -------------------------------
-    for (int x = 0; x < width + 2; x++) std::cout << "+";
-    std::cout << "\n";
+    for (int x = 0; x < width + 2; x++) buffer += "+";
+    buffer += "\n";
 
     // -------------------------------
     // Affichage HUD
     // -------------------------------
-    std::cout << "SCORE : " << score
-              << "    VIES : " << lives
-              << "    NIVEAU : " << level
-              << "\n\n";
+    buffer += "SCORE : " + std::to_string(score) + 
+              "    VIES : " + std::to_string(lives) + 
+              "    NIVEAU : " + std::to_string(level) + "\n\n";
 
     // -------------------------------
     // Grille principale
     // -------------------------------
     for (int y = height - 1; y >= 0; y--) {
 
-        std::cout << "|"; // bordure gauche
+        buffer += "|"; // bordure gauche
 
         for (int x = 0; x < width; x++) {
 
@@ -413,10 +425,10 @@ void Game::spawnWave() {
     }
 
     enemyDirection = 1;                     // direction initiale
-    enemySpeed = std::max(3, 10 - level);   // vitesse ennemis
+    enemySpeed = std::max(2, 15 - level);   // vitesse ennemis
     #ifndef USE_SFML
         std::cout << "\n--- NIVEAU " << level << " ---\n";
-        sleep_ms(500
+        sleep_ms(1000
         );
     #endif
 
