@@ -41,6 +41,16 @@ public:
 
 
 
+    // ------------------
+    // Accesseurs (tests / debug)
+    // ------------------
+    int getScore() const { return score; }
+    int getLives() const { return lives; }
+    int getLevel() const { return level; }
+    int getPlayerX() const { return playerX; }
+    std::size_t getEnemyCount() const { return enemies.size(); }
+    std::size_t getPlayerBulletCount() const { return bulletsX.size(); }
+
 private:
     int width;       // largeur de l'écran
     int height;      // hauteur de l'écran

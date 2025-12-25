@@ -2,19 +2,30 @@
 #include "Game.hpp"
 
 /**
- * \brief Tests minimaux (smoke tests) pour vérifier que les fonctions de base
- *        s'exécutent sans crash.
+ * \brief Tests unitaires de base sur la logique du jeu.
  *
- * \note Pour des tests plus fins (score, ennemis, tirs...), on ajoutera
- *       des accesseurs const dans Game dans un jalon suivant.
+ * \details On teste ici des invariants simples et reproductibles.
+ *          L’objectif est d’avoir des tests stables qui valident la logique,
+ *          sans dépendre de l’interface SFML.
  */
-TEST_CASE("Initialisation du jeu", "[game]") {
+
+TEST_CASE("Etat initial du jeu", "[game]") {
     Game g;
-    SUCCEED("Le constructeur Game() ne doit pas crasher.");
+
+    CHECK(g.getScore() == 0);
+    CHECK(g.getLives() == 3);
+    CHECK(g.getLevel() == 1);
+
+    // Au niveau 1, une vague d'ennemis doit être présente.
+    CHECK(g.getEnemyCount() > 0);
 }
 
-TEST_CASE("Mise à jour du jeu", "[game]") {
+TEST_CASE("Tir du joueur : un projectile est cree", "[game]") {
     Game g;
-    g.update();
-    SUCCEED("update() ne doit pas crasher sur un état initial.");
+
+    const auto before = g.getPlayerBulletCount();
+    g.shoot();
+    const auto after = g.getPlayerBulletCount();
+
+    CHECK(after == before + 1);
 }
