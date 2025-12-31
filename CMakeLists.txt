@@ -21,7 +21,7 @@ target_include_directories(space_invaders_console PRIVATE include)
 # ------------------
 # Version SFML
 # ------------------
-find_package(SFML 2.5 COMPONENTS graphics window system REQUIRED)
+find_package(SFML 2.5 COMPONENTS graphics window system audio REQUIRED)
 
 add_executable(space_invaders_sfml
     src/main_sfml.cpp
@@ -33,6 +33,7 @@ target_link_libraries(space_invaders_sfml
     sfml-graphics
     sfml-window
     sfml-system
+    sfml-audio
 )
 
 # --- Copy assets next to executable (so relative paths work) ---

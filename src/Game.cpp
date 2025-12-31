@@ -1,3 +1,6 @@
+static int gExplosionsToPlay = 0;
+
+
 #include <iostream>
 #include <vector>
 #include <stdio.h>
@@ -22,6 +25,8 @@
 
 #ifdef USE_SFML
     #include <SFML/Graphics.hpp>
+    #include <SFML/Audio.hpp>
+
     #include <SFML/Window.hpp>
 #endif
 
@@ -237,6 +242,8 @@ void Game::update() {
 
                 // Ajouter explosion
                 explosions.push_back({ enemies[j].x, enemies[j].y, 5 });
+                gExplosionsToPlay++;
+
 
                 // Gestion boss
                 if (enemies[j].isBoss) {
@@ -518,6 +525,24 @@ void Game::runSFML(const std::string& fontPath)  {
     sf::Font font;
     bool fontOk = font.loadFromFile(fontPath);
 
+    // -------------------------------
+    // Audio (SFML) : chargement des sons
+    // -------------------------------
+    sf::SoundBuffer shootBuffer;
+    sf::SoundBuffer explosionBuffer;
+
+    const bool shootOk = shootBuffer.loadFromFile("assets/sounds/shoot.wav");
+    const bool explosionOk = explosionBuffer.loadFromFile("assets/sounds/explosion.wav");
+
+    sf::Sound shootSound;
+    sf::Sound explosionSound;
+    if (shootOk) shootSound.setBuffer(shootBuffer);
+    if (explosionOk) explosionSound.setBuffer(explosionBuffer);
+
+    shootSound.setVolume(35.f);
+    explosionSound.setVolume(45.f);
+
+
     sf::Text hud;
     if (fontOk) {
         hud.setFont(font);
@@ -544,14 +569,25 @@ void Game::runSFML(const std::string& fontPath)  {
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) window.close();
-            if (event.type == sf::Event::KeyPressed) {
-                if (event.key.code == sf::Keyboard::Escape) {
-                    window.close();
-                }
-                if (event.key.code == sf::Keyboard::Space) {
-                    requestShoot = true;
-                }
-            }
+              if (event.type == sf::Event::KeyPressed) {
+                  if (event.key.code == sf::Keyboard::Escape) {
+                      window.close();
+                  }
+                  if (event.key.code == sf::Keyboard::Space) {
+                      // Son immédiat à l appui
+                      if (shootOk) { shootSound.stop(); shootSound.play(); }
+
+                      // Tir immédiat si possible, sinon on le met en attente
+                      if (shootCooldown <= 0.f) {
+                          shoot();
+                          shootCooldown = 0.25f;
+                          requestShoot = false;
+                      } else {
+                          requestShoot = true;
+                      }
+                  }
+              }
+
             // -------------------------------
             // Redimensionnement : on met à jour la vue pour garder les proportions
             // (sinon l'image est étirée)
@@ -607,6 +643,12 @@ void Game::runSFML(const std::string& fontPath)  {
             requestShoot = false;
 
             update();
+
+            if (gExplosionsToPlay > 0) {
+                if (explosionOk) { explosionSound.stop(); explosionSound.play(); }
+                gExplosionsToPlay = 0;
+            }
+
             // Si le joueur a perdu une vie, on déclenche un feedback visuel
             if (lives < livesPrev) {
                 hitFlash = 0.20f;     // flash court
