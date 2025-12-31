@@ -721,6 +721,36 @@ void Game::runSFML(const std::string& fontPath)  {
                 bossTxt.setPosition(static_cast<float>(margin), 32.f);
                 bossTxt.setString("Boss HP: " + std::to_string(bossHealth) + "/" + std::to_string(bossMaxHealth));
                 window.draw(bossTxt);
+
+                // -------------------------------
+                // Barre de vie du boss (visuelle)
+                // -------------------------------
+                {
+                    const float barW = 260.f;
+                    const float barH = 12.f;
+                    // Position de la barre : à droite du texte (pas de superposition)
+                    const float padding = 12.f;
+                    const auto bounds = bossTxt.getGlobalBounds();
+                    const float x = bounds.left + bounds.width + padding;
+                    const float y = bounds.top + (bounds.height - barH) * 0.5f;
+
+
+                    // Fond (barre vide)
+                    sf::RectangleShape bg(sf::Vector2f(barW, barH));
+                    bg.setPosition(x, y);
+                    bg.setFillColor(sf::Color(40, 40, 60, 220));
+                    bg.setOutlineThickness(1.f);
+                    bg.setOutlineColor(sf::Color(140, 140, 170));
+                    window.draw(bg);
+
+                    // Remplissage (HP actuel)
+                    const float ratio = (bossMaxHealth > 0) ? (static_cast<float>(bossHealth) / static_cast<float>(bossMaxHealth)) : 0.f;
+                    sf::RectangleShape fg(sf::Vector2f(barW * std::max(0.f, std::min(1.f, ratio)), barH));
+                    fg.setPosition(x, y);
+                    fg.setFillColor(sf::Color(255, 120, 80, 230));
+                    window.draw(fg);
+                }
+
             }
         }
         // -------------------------------
