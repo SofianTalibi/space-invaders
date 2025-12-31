@@ -149,6 +149,19 @@ void Game::update() {
     }
 
     // -------------------------------
+    // Condition de défaite : un ennemi atteint la ligne du joueur
+    // -------------------------------
+    // Le joueur est sur y = 0. Si un ennemi descend jusqu à y <= 0, la partie est perdue.
+    for (const auto& e : enemies) {
+        if (e.y <= 0) {
+            running = false;
+            std::cout << "GAME OVER ! Un ennemi a atteint le sol." << std::endl;
+            return;
+        }
+    }
+
+
+    // -------------------------------
     // Tirs ennemis aléatoires
     // -------------------------------
     if (rand() % (40 - std::min(level*2, 30)) == 0)
@@ -413,7 +426,7 @@ void Game::spawnWave() {
     }else{
 
     int enemiesPerLine = 8;             // nombre d'ennemis par ligne
-    int lines = level;                  // le niveau = nombre de lignes
+    int lines = std::min(level, height - 2);  // borne : évite de générer des ennemis trop bas
     int startY = height - 1;            // première ligne en haut
 
     for (int line = 0; line < lines; line++) {
