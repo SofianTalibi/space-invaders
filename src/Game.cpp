@@ -549,13 +549,21 @@ void Game::runSFML(const std::string& fontPath)  {
         }
 
         const float dt = clock.restart().asSeconds();
-        // Décrément des timers d'effets
-        hitFlash = std::max(0.f, hitFlash - dt);
-        shakeTimer = std::max(0.f, shakeTimer - dt);
+
+        // -------------------------------
+        // Gestion du temps (dt)
+        // -------------------------------
+        // Sur WSL/llvmpipe il peut y avoir des "sauts" de dt quand une frame est lente.
+        // Pour que les effets visuels restent visibles, on borne le dt utilisé par les timers.
+        const float dtEffets = std::min(dt, 0.033f); // ~30 FPS max pour les effets
+
+        // Décrément des timers d effets (flash + secousse)
+        hitFlash  = std::max(0.f, hitFlash  - dtEffets);
+        shakeTimer = std::max(0.f, shakeTimer - dtEffets);
+
         accumulator += dt;
         shootCooldown = std::max(0.f, shootCooldown - dt);
-        // Décrément du flash (retour progressif à la normale)
-        hitFlash = std::max(0.f, hitFlash - dt);
+
         // -------------------------------
         // Mise à jour du fond étoilé
         // -------------------------------
@@ -589,10 +597,31 @@ void Game::runSFML(const std::string& fontPath)  {
             // Si le joueur a perdu une vie, on déclenche un feedback visuel
             if (lives < livesPrev) {
                 hitFlash = 0.20f;     // flash court
-                shakeTimer = 0.25f;   // secousse courte
+                shakeTimer = 0.50f;   // secousse courte
             }
             livesPrev = lives;
         }
+
+        // -------------------------------
+        // Secousse de la caméra (camera shake) : feedback visuel lors d un impact
+        // -------------------------------
+        // On décale légèrement le centre de la vue. L intensité diminue au cours du temps
+        // (shakeTimer -> 0), ce qui rend l effet plus "propre" qu un tremblement constant.
+        if (shakeTimer > 0.f) {
+            const float t = std::max(0.f, std::min(1.f, shakeTimer / 0.50f));
+            const float intensity = 24.f * t; // amplitude max (pixels), décroissante
+
+            // Offset pseudo-aléatoire (évite un pattern trop régulier)
+            const float dx = (static_cast<float>(std::rand() % 100) / 100.f - 0.5f) * intensity;
+            const float dy = (static_cast<float>(std::rand() % 100) / 100.f - 0.5f) * intensity;
+
+            view.setCenter(static_cast<float>(winW) * 0.5f + dx, static_cast<float>(winH) * 0.5f + dy);
+        } else {
+            // Retour à une vue centrée
+            view.setCenter(static_cast<float>(winW) * 0.5f, static_cast<float>(winH) * 0.5f);
+        }
+        window.setView(view);
+
          window.clear(sf::Color(10, 10, 18));
         // -------------------------------
         // Dessin du fond étoilé
