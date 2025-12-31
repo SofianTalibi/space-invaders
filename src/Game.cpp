@@ -447,6 +447,61 @@ void Game::runSFML(const std::string& fontPath)  {
     sf::RenderWindow window(sf::VideoMode(winW, winH), "Space Invaders (SFML)");
     window.setFramerateLimit(60);
 
+    // -------------------------------
+    // Gestion de la vue (mise à l'échelle / letterboxing)
+    // -------------------------------
+    sf::View view(sf::FloatRect(0.f, 0.f, static_cast<float>(winW), static_cast<float>(winH)));
+    window.setView(view);
+
+    auto updateView = [&](unsigned int w, unsigned int h) {
+        const float windowRatio = static_cast<float>(w) / static_cast<float>(h);
+        const float viewRatio   = static_cast<float>(winW) / static_cast<float>(winH);
+
+        float sizeX = 1.f, sizeY = 1.f;
+        float posX  = 0.f, posY  = 0.f;
+
+        // Letterboxing pour conserver les proportions du "monde" logique
+        if (windowRatio > viewRatio) {
+            sizeX = viewRatio / windowRatio;
+            posX  = (1.f - sizeX) * 0.5f;
+        } else {
+            sizeY = windowRatio / viewRatio;
+            posY  = (1.f - sizeY) * 0.5f;
+        }
+
+        view.setViewport(sf::FloatRect(posX, posY, sizeX, sizeY));
+        window.setView(view);
+    };
+
+    // Valeur initiale
+    updateView(static_cast<unsigned int>(winW), static_cast<unsigned int>(winH));
+
+    // -------------------------------
+    // Fond étoilé (sans assets)
+    // -------------------------------
+    struct Star {
+        sf::Vector2f pos;
+        float speed;      // pixels par seconde
+        float radius;
+        sf::Color color;
+    };
+
+    std::vector<Star> stars;
+    stars.reserve(200);
+
+    for (int i = 0; i < 200; ++i) {
+        Star s;
+        s.pos = sf::Vector2f(
+            static_cast<float>(std::rand() % winW),
+            static_cast<float>(std::rand() % winH)
+        );
+        s.speed  = 20.f + static_cast<float>(std::rand() % 80);
+        s.radius = 1.f + static_cast<float>(std::rand() % 2);
+        const sf::Uint8 c = static_cast<sf::Uint8>(180 + (std::rand() % 75));
+        s.color = sf::Color(c, c, c);
+        stars.push_back(s);
+    }
+
     sf::Font font;
     bool fontOk = font.loadFromFile(fontPath);
 
@@ -478,11 +533,30 @@ void Game::runSFML(const std::string& fontPath)  {
                     requestShoot = true;
                 }
             }
+            // -------------------------------
+            // Redimensionnement : on met à jour la vue pour garder les proportions
+            // (sinon l'image est étirée)
+            // -------------------------------
+            if (event.type == sf::Event::Resized) {
+                updateView(event.size.width, event.size.height);
+            }
         }
 
         const float dt = clock.restart().asSeconds();
         accumulator += dt;
         shootCooldown = std::max(0.f, shootCooldown - dt);
+        // -------------------------------
+        // Mise à jour du fond étoilé
+        // -------------------------------
+        // Les étoiles "descendent" (effet de mouvement), puis réapparaissent en haut
+        // quand elles sortent de l'écran.
+        for (auto& s : stars) {
+            s.pos.y += s.speed * dt;
+            if (s.pos.y > static_cast<float>(winH)) {
+                s.pos.y = 0.f;
+                s.pos.x = static_cast<float>(std::rand() % winW);
+            }
+        }
 
         // Inputs temps-réel (déplacement continu)
         const bool leftHeld = sf::Keyboard::isKeyPressed(sf::Keyboard::Left) || sf::Keyboard::isKeyPressed(sf::Keyboard::A);
@@ -503,6 +577,16 @@ void Game::runSFML(const std::string& fontPath)  {
             update();
         }
          window.clear(sf::Color(10, 10, 18));
+        // -------------------------------
+        // Dessin du fond étoilé
+        // -------------------------------
+        // On dessine des petits cercles blancs/gris en arrière-plan.
+        for (const auto& s : stars) {
+            sf::CircleShape star(s.radius);
+            star.setFillColor(s.color);
+            star.setPosition(s.pos);
+            window.draw(star);
+        }
 
         sf::RectangleShape border(sf::Vector2f(static_cast<float>(width * cell), static_cast<float>(height * cell)));
         border.setPosition(static_cast<float>(margin), static_cast<float>(hudH + margin));
