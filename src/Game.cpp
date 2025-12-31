@@ -521,6 +521,12 @@ void Game::runSFML(const std::string& fontPath)  {
 
     bool requestShoot = false;
     float shootCooldown = 0.f;
+    // -------------------------------
+    // Effets visuels (feedback / impact)
+    // -------------------------------
+    int livesPrev = lives;        // pour détecter une perte de vie
+    float hitFlash = 0.f;         // timer (secondes) pour un flash rouge
+    float shakeTimer = 0.f;       // timer de secousse d'écran
      while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -543,8 +549,13 @@ void Game::runSFML(const std::string& fontPath)  {
         }
 
         const float dt = clock.restart().asSeconds();
+        // Décrément des timers d'effets
+        hitFlash = std::max(0.f, hitFlash - dt);
+        shakeTimer = std::max(0.f, shakeTimer - dt);
         accumulator += dt;
         shootCooldown = std::max(0.f, shootCooldown - dt);
+        // Décrément du flash (retour progressif à la normale)
+        hitFlash = std::max(0.f, hitFlash - dt);
         // -------------------------------
         // Mise à jour du fond étoilé
         // -------------------------------
@@ -575,6 +586,12 @@ void Game::runSFML(const std::string& fontPath)  {
             requestShoot = false;
 
             update();
+            // Si le joueur a perdu une vie, on déclenche un feedback visuel
+            if (lives < livesPrev) {
+                hitFlash = 0.20f;     // flash court
+                shakeTimer = 0.25f;   // secousse courte
+            }
+            livesPrev = lives;
         }
          window.clear(sf::Color(10, 10, 18));
         // -------------------------------
@@ -656,7 +673,28 @@ void Game::runSFML(const std::string& fontPath)  {
                 window.draw(bossTxt);
             }
         }
+        // -------------------------------
+        // Flash de dégâts (overlay rouge)
+        // -------------------------------
+        if (hitFlash > 0.f) {
+            const float alpha = 120.f * (hitFlash / 0.20f); // décroissance
+            sf::RectangleShape overlay(sf::Vector2f(static_cast<float>(winW), static_cast<float>(winH)));
+            overlay.setPosition(0.f, 0.f);
+            overlay.setFillColor(sf::Color(255, 40, 40, static_cast<sf::Uint8>(alpha)));
+            window.draw(overlay);
+        }
+        // -------------------------------
+        // Flash de dégâts : overlay rouge transparent
+        // -------------------------------
+        if (hitFlash > 0.f) {
+            // Alpha décroissant : fort au début, puis disparaît
+            const float alpha = 120.f * (hitFlash / 0.20f);
 
+            sf::RectangleShape overlay(sf::Vector2f(static_cast<float>(winW), static_cast<float>(winH)));
+            overlay.setPosition(0.f, 0.f);
+            overlay.setFillColor(sf::Color(255, 40, 40, static_cast<sf::Uint8>(alpha)));
+            window.draw(overlay);
+        }
         window.display();
 
         if (!running) {
